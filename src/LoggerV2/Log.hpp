@@ -197,8 +197,8 @@ class Log {
    * them so that we may pass unlimited arguments to the Log functions.
    * Otherwise, use the old preprocessor metaprogramming.
    */
-//#if (BOOST_COMP_GNUC >= BOOST_VERSION_NUMBER(9, 0, 0)) || \
-//    defined(__IN_ECLIPSE_PARSER__)
+//#if (BOOST_COMP_GNUC >= BOOST_VERSION_NUMBER(9, 0, 0)) ||
+//defined(__IN_ECLIPSE_PARSER__)
 #if defined(__IN_ECLIPSE_PARSER__)
   template <typename... Args,
             str_const file_name = str_const(sl::current().file_name()),
