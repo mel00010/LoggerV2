@@ -34,10 +34,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-#include "P7_Trace.h"
-
 #include "LoggerV2/CustomSourceLocation.hpp"
+#include "LoggerV2/source_location.h"
 #include "LoggerV2/str_const.hpp"
+#include "P7_Trace.h"
 
 #if __has_include(<glm/gtx/io.hpp>)
 #define GLM_ENABLE_EXPERIMENTAL
@@ -122,7 +122,7 @@ class Log {
   }
 
  private:
-  using sl = CustomSourceLocation;
+  using sl = std::source_location;
 
  public:
   inline IP7_Trace* get_trace() const { return trace_; }
@@ -197,8 +197,9 @@ class Log {
    * them so that we may pass unlimited arguments to the Log functions.
    * Otherwise, use the old preprocessor metaprogramming.
    */
-#if (BOOST_COMP_GNUC >= BOOST_VERSION_NUMBER(9, 0, 0)) || \
-    defined(__IN_ECLIPSE_PARSER__)
+//#if (BOOST_COMP_GNUC >= BOOST_VERSION_NUMBER(9, 0, 0)) || \
+//    defined(__IN_ECLIPSE_PARSER__)
+#if defined(__IN_ECLIPSE_PARSER__)
   template <typename... Args,
             str_const file_name = str_const(sl::current().file_name()),
             str_const function_name = str_const(sl::current().function_name()),

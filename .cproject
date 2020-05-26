@@ -227,16 +227,28 @@
         	
     </storageModule>
     	
-    <storageModule moduleId="scannerConfiguration">
-        		
-        <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-        	
-    </storageModule>
-    	
     <storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
     	
     <storageModule moduleId="refreshScope"/>
     	
     <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+    	
+    <storageModule moduleId="scannerConfiguration">
+        		
+        <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+        		
+        <scannerConfigBuildInfo instanceId="de.marw.cmake.cdt.lsp.config.debug.2036575873;de.marw.cmake.cdt.lsp.config.debug.2036575873.;de.marw.cmake.cdt.lsp.toolchain.tool.dummy.1509560218;de.marw.cmake.cdt.lsp.inputType.c.432183959">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+            		
+        </scannerConfigBuildInfo>
+        		
+        <scannerConfigBuildInfo instanceId="de.marw.cmake.cdt.lsp.config.debug.2036575873;de.marw.cmake.cdt.lsp.config.debug.2036575873.;de.marw.cmake.cdt.lsp.toolchain.tool.dummy.1509560218;de.marw.cmake.cdt.lsp.inputType.cpp.927972598">
+            			
+            <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+            		
+        </scannerConfigBuildInfo>
+        	
+    </storageModule>
     
 </cproject>
