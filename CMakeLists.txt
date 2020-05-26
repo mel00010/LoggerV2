@@ -97,8 +97,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 cmake_policy(SET CMP0072 NEW)
-set_property(GLOBAL PROPERTY JOB_POOLS two_jobs=2 ten_jobs=10)
-set(CMAKE_JOB_POOL_LINK two_jobs)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -119,17 +117,20 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 #Subdirectories
 add_subdirectory(src)
-add_subdirectory(test)
-add_subdirectory(docs)
 
-# uninstall target
-if(NOT TARGET uninstall)
-  configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/Uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/Uninstall.cmake"
-    IMMEDIATE @ONLY)
+# We are not a subproject
+if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
+  add_subdirectory(test)
+  add_subdirectory(docs)
 
-  add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/Uninstall.cmake)
+  # uninstall target
+  if(NOT TARGET uninstall)
+    configure_file(
+      "${CMAKE_SOURCE_DIR}/cmake/Uninstall.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/Uninstall.cmake"
+      IMMEDIATE @ONLY)
+
+    add_custom_target(uninstall
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/Uninstall.cmake)
+  endif()
 endif()
-
