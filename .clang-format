@@ -22,7 +22,7 @@ IncludeCategories:
     Priority: 40
 
     # Your project's h files.
-  - Regex:    '^"(2D|3D|GL|Logging|Sound|Util|Vulkan|CallbackHandler.hpp|GameCore.hpp|InputHandler.hpp|Renderer.hpp|ShaderPrograms.hpp|VboHandle.hpp|Vertex.hpp|WindowManager.hpp)'
+  - Regex:    '^"LoggerV2'
     Priority: 50
 
   # Other libraries' h files (with quotes).

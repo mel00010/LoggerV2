@@ -22,6 +22,9 @@
 
 #include <string>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 #include "LoggerV2/Client.hpp"
