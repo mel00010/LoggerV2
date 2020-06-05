@@ -19,15 +19,16 @@ target_sources(Logging_Logging
     ${CMAKE_CURRENT_SOURCE_DIR}/str_const.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Telemetry.hpp
 )
-
-target_precompile_headers(Logging_Logging
-  PUBLIC
-    "Client.hpp"
-    "CustomSourceLocation.hpp"
-    "Flags.hpp"
-    "Log.hpp"
-    "Telemetry.hpp"
-    "str_const.hpp"
+if(not DEFINED DISABLE_PCH)
+    target_precompile_headers(Logging_Logging
+      PUBLIC
+        "Client.hpp"
+        "CustomSourceLocation.hpp"
+        "Flags.hpp"
+        "Log.hpp"
+        "Telemetry.hpp"
+        "str_const.hpp"
+    )
 )
 
 target_include_directories(Logging_Logging
