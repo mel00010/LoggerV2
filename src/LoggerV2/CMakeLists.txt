@@ -29,7 +29,6 @@ if(not DEFINED DISABLE_PCH)
         "Telemetry.hpp"
         "str_const.hpp"
     )
-  )
 endif()
 target_include_directories(Logging_Logging
   PUBLIC
