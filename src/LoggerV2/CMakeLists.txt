@@ -19,7 +19,7 @@ target_sources(Logging_Logging
     ${CMAKE_CURRENT_SOURCE_DIR}/str_const.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Telemetry.hpp
 )
-if(not DEFINED DISABLE_PCH)
+if(NOT DEFINED DISABLE_PCH)
     target_precompile_headers(Logging_Logging
       PUBLIC
         "Client.hpp"
