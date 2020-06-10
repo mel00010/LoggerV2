@@ -20,6 +20,10 @@
 #ifndef SRC_LOGGERV2_CUSTOMSOURCELOCATION_HPP_
 #define SRC_LOGGERV2_CUSTOMSOURCELOCATION_HPP_
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0  // Compatibility with non-clang compilers.
+#endif
+
 namespace logging {
 
 struct CustomSourceLocation {
@@ -33,9 +37,28 @@ struct CustomSourceLocation {
 
   // 14.1.2, source_location creation
   static constexpr CustomSourceLocation current(
+#if __has_builtin(__builtin_FILE)
       const char* __file = __builtin_FILE(),
-      const char* __func = __builtin_FUNCTION(), int __line = __builtin_LINE(),
-      int __col = 0) noexcept {
+#else  /* __has_builtin(__builtin_FILE) */
+      const char* __file = "unknown",
+#endif /* __has_builtin(__builtin_FILE) */
+#if __has_builtin(__builtin_FUNCTION)
+      const char* __func = __builtin_FUNCTION(),
+#else  /* __has_builtin(__builtin_FUNCTION) */
+      const char* __func = "unknown",
+#endif /* __has_builtin(__builtin_FUNCTION) */
+#if __has_builtin(__builtin_LINE)
+      int __line = __builtin_LINE(),
+#else  /* __has_builtin(__builtin_LINE) */
+      int __line = 0,
+#endif /* __has_builtin(__builtin_LINE) */
+#if __has_builtin(__builtin_COLUMN)
+      int __col = __builtin_COLUMN()
+#else  /* __has_builtin(__builtin_COLUMN) */
+      int __col = 0
+#endif /* __has_builtin(__builtin_COLUMN) */
+          ) noexcept {
+
     CustomSourceLocation __loc;
     __loc.file_ = __file;
     __loc.func_ = __func;
