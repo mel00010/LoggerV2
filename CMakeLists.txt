@@ -33,6 +33,30 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--thinlto-cache-
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+set(REDIRECTION_FLAGS "-ffile-prefix-map=../../samples/=")
+set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../samples/=")
+set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=")
+set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../src=GameEngine")
+set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../../src=GameEngine")
+set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=_deps/=")
+
+set(SHARED_FLAGS "-Wno-unused-result -Wsign-compare")
+set(SHARED_FLAGS "${SHARED_FLAGS} -fstack-protector-strong -Wformat")
+set(SHARED_FLAGS "${SHARED_FLAGS} -Werror=format-security -fwrapv")
+set(SHARED_FLAGS "${SHARED_FLAGS} -Wall -Wextra")
+set(SHARED_FLAGS "${SHARED_FLAGS} -fdiagnostics-color=always")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SHARED_FLAGS}")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SHARED_FLAGS}")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG_BUILD=1 -DMIN_LOG_LEVEL=0")
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_DEBUG_BUILD=0 -DMIN_LOG_LEVEL=0 ${REDIRECTION_FLAGS}")
+
+
 set( CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the C++ compiler during coverage builds."
     FORCE )
@@ -57,38 +81,15 @@ set( CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
     "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE )
 
-set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -g -ggdb -O0")
-set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} --coverage -fprofile-arcs")
-set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -ftest-coverage  -D_DEBUG_BUILD=1 -DMIN_LOG_LEVEL=0")
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -ggdb")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG_BUILD=1 -DMIN_LOG_LEVEL=0")
-
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_DEBUG_BUILD=0 -DMIN_LOG_LEVEL=0")
-
-set(REDIRECTION_FLAGS "-ffile-prefix-map=../../samples/=")
-set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../samples/=")
-set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=")
-set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../src=LoggerV2")
-set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../../src=LoggerV2")
-set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=_deps/=")
-
-set(SHARED_FLAGS "-Wno-unused-result -Wsign-compare")
-set(SHARED_FLAGS "${SHARED_FLAGS} -fstack-protector-strong -Wformat")
-set(SHARED_FLAGS "${SHARED_FLAGS} -Werror=format-security -fwrapv")
-set(SHARED_FLAGS "${SHARED_FLAGS} -Wall -Wextra")
-set(SHARED_FLAGS "${SHARED_FLAGS} -fdiagnostics-color=always")
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SHARED_FLAGS} ${REDIRECTION_FLAGS}")
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SHARED_FLAGS} ${REDIRECTION_FLAGS}")
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -fcoverage-mapping")
+  set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -fprofile-instr-generate")
   # using Clang
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+  set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} --coverage -fprofile-arcs")
+  set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -ftest-coverage")
   # using GCC
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # using Intel C++

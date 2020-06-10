@@ -29,7 +29,9 @@ target_include_directories(tests
   PRIVATE
     ${PROJECT_SOURCE_DIR}/src
 )
-target_precompile_headers(tests REUSE_FROM Logging::Logging)
+if(NOT DEFINED DISABLE_PCH)
+    target_precompile_headers(tests REUSE_FROM Logging::Logging)
+endif()
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 message("$ENV{LD_LIBRARY_PATH}")
