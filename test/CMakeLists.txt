@@ -39,9 +39,9 @@ target_link_libraries(tests
   Logging_test
 
   # $<TARGET_FILE> is used to prevent shared linking of gtest
-  $<TARGET_FILE:gtest>
-  $<TARGET_FILE:gmock>
-  $<TARGET_FILE:gmock_main>
+  gtest
+  gmock
+  gmock_main
   pthread
 )
 add_subdirectory(Logging)
