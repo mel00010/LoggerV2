@@ -8,6 +8,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 cmake_policy(SET CMP0069 NEW)
 include(CheckIPOSupported)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Optional IPO. Do not use IPO if it's not supported by compiler.
 check_ipo_supported(RESULT result OUTPUT output)
 if(result)
