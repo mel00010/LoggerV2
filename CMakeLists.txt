@@ -2,8 +2,10 @@ cmake_minimum_required (VERSION 3.16)
 
 project (Logging)
 
+option(DISABLE_PCH "Disable precompiled headers" OFF)
+
 include(GNUInstallDirs)
-INCLUDE(FindPkgConfig)
+include(FindPkgConfig)
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 cmake_policy(SET CMP0069 NEW)
 include(CheckIPOSupported)
