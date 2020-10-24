@@ -54,7 +54,7 @@ Log::Log(const std::string name) {
     }
     // Intentionally increase ref counter so that the logger isn't created
     // and destroyed constantly and to enable log support for crashes
-    trace_->Add_Ref();
+    //    trace_->Add_Ref();
   }
 }
 

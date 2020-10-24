@@ -43,4 +43,7 @@ target_link_libraries(Logging_Logging
     absl::flags_usage
     absl::flags_parse
     absl::strings
+    Boost::stacktrace_backtrace
+    libbacktrace
+    dl
 )

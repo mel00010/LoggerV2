@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.16)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 project (Logging)
 
 option(DISABLE_PCH "Disable precompiled headers" OFF)
@@ -23,15 +25,13 @@ endif()
 set(CMAKE_POLICY_DEFAULT_CMP0083 NEW)
 cmake_policy(SET CMP0083 NEW)
 
-include(CheckPIESupported)
-check_pie_supported()
+#include(CheckPIESupported)
+#check_pie_supported()
 set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
 
 set(CMAKE_LINK_WHAT_YOU_USE FALSE)
 
 set(BUILD_SHARED_LIBS OFF)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(REDIRECTION_FLAGS "-ffile-prefix-map=../../samples/=")
 set(REDIRECTION_FLAGS "${REDIRECTION_FLAGS} -ffile-prefix-map=../samples/=")
@@ -105,13 +105,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+include(GetLibBacktrace)
+
+include(conan)
+conan_cmake_run(REQUIRES boost/1.74.0
+                BASIC_SETUP CMAKE_TARGETS
+                BUILD missing)
+
 include(GetP7)
 include(GetAbseil)
 include(GetFmt)
 
-find_package (Boost REQUIRED)
-
-add_library(boost INTERFACE IMPORTED)
+conan_set_find_paths()
+find_package (Boost REQUIRED COMPONENTS stacktrace_basic
+        stacktrace_backtrace
+        stacktrace_addr2line
+        stacktrace_noop)
 
 # The version number.
 set(Logging_VERSION_MAJOR 0)

@@ -18,17 +18,22 @@
  * along with LoggerV2.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
+#define BOOST_STACKTRACE_LINK
 #include "LoggerV2/Client.hpp"
 
 #include <array>
 #include <cstring>
 #include <iostream>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/stacktrace.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
@@ -127,102 +132,341 @@ ABSL_FLAG(::logging::flags::LogFSize, log_fsize,
 namespace logging {
 
 #ifdef PREDEF_PLATFORM_UNIX
-extern "C" void HandleUnixSigAbrt([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
-                                  [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigBus([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigFpe([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigHup([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigIll([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigInt([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigPipe([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
-                                  [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigPwr([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
-                                 [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigQuit([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
-                                  [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
-}
-extern "C" void HandleUnixSigSegv([[maybe_unused]] int sig, siginfo_t* siginfo,
-                                  [[maybe_unused]] void* context) {
+
+struct SignalLogData {
+  int sig = 0;
+  siginfo_t siginfo{};
+  void* backtrace_data = nullptr;
+  std::size_t backtrace_data_size = 0;
+  std::size_t backtrace_depth = 0;
+};
+
+static SignalLogData atexit_data{};
+
+void ExitHandler() {
+  std::string backtrace{};
+  if (atexit_data.backtrace_depth != 0 &&
+      atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    boost::stacktrace::stacktrace st = boost::stacktrace::stacktrace::from_dump(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+    std::stringstream ss;
+    ss << st;
+    backtrace = ss.str();
+  }
   ::logging::Log log = ::logging::Log("main");
-  log.Critical("Segmentation fault!");
-  log.Error("siginfo->si_addr  = {}", siginfo->si_addr);
-  log.Error("siginfo->si_errno = {}", siginfo->si_errno);
-  log.Error("siginfo->si_code  = {}", siginfo->si_code);
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
+
+  switch (atexit_data.sig) {
+    case SIGABRT:
+      log.Critical("SIGABRT!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGBUS:
+      log.Critical("SIGBUS!");
+      log.Error("siginfo->si_addr  = {}", atexit_data.siginfo.si_addr);
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGFPE:
+      log.Critical("SIGFPE!");
+      log.Error("siginfo->si_addr  = {}", atexit_data.siginfo.si_addr);
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGHUP:
+      log.Critical("SIGHUP!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGILL:
+      log.Critical("SIGILL!");
+      log.Error("siginfo->si_addr  = {}", atexit_data.siginfo.si_addr);
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGINT:
+      log.Warning("SIGINT!");
+      log.Info("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Info("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Info("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGPIPE:
+      log.Critical("SIGPIPE!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGPWR:
+      log.Critical("SIGPWR!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGQUIT:
+      log.Critical("SIGQUIT!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGSEGV:
+      std::cerr << "Segmentation fault!" << std::endl;
+      log.Critical("Segmentation fault!");
+      log.Error("siginfo->si_addr  = {}", atexit_data.siginfo.si_addr);
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGTSTP:
+      log.Critical("SIGTSTP!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGSYS:
+      log.Critical("SIGSYS!");
+      log.Error("siginfo->si_call_addr = {}", atexit_data.siginfo.si_call_addr);
+      log.Error("siginfo->si_syscall = {}", atexit_data.siginfo.si_syscall);
+      log.Error("siginfo->si_arch = {}", atexit_data.siginfo.si_arch);
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGTERM:
+      log.Critical("SIGTERM!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGXCPU:
+      log.Critical("SIGXCPU!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    case SIGXFSZ:
+      log.Critical("SIGXFSZ!");
+      log.Error("siginfo->si_errno = {}", atexit_data.siginfo.si_errno);
+      log.Error("siginfo->si_code  = {}", atexit_data.siginfo.si_code);
+      if (backtrace.length() != 0) {
+        log.Error("Backtrace: \n{}", backtrace);
+      }
+      break;
+    default:
+      break;
+  }
+  P7_Flush();
 }
-extern "C" void HandleUnixSigTstp([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
+
+extern "C" void HandleUnixSigAbrt(int sig, siginfo_t* siginfo,
                                   [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGABRT + 128);
 }
-extern "C" void HandleUnixSigSys([[maybe_unused]] int sig,
-                                 [[maybe_unused]] siginfo_t* siginfo,
+extern "C" void HandleUnixSigBus(int sig, siginfo_t* siginfo,
                                  [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGBUS + 128);
+}
+extern "C" void HandleUnixSigFpe(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGFPE + 128);
+}
+extern "C" void HandleUnixSigHup(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGHUP + 128);
+}
+extern "C" void HandleUnixSigIll(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGILL + 128);
+}
+extern "C" void HandleUnixSigInt(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
   std::exit(EXIT_SUCCESS);
 }
-extern "C" void HandleUnixSigTerm([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
+extern "C" void HandleUnixSigPipe(int sig, siginfo_t* siginfo,
                                   [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGPIPE + 128);
 }
-extern "C" void HandleUnixSigXcpu([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
-                                  [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
+extern "C" void HandleUnixSigPwr(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGPWR + 128);
 }
-extern "C" void HandleUnixSigXfsz([[maybe_unused]] int sig,
-                                  [[maybe_unused]] siginfo_t* siginfo,
+extern "C" void HandleUnixSigQuit(int sig, siginfo_t* siginfo,
                                   [[maybe_unused]] void* context) {
-  P7_Exceptional_Flush();
-  std::exit(EXIT_SUCCESS);
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGQUIT + 128);
+}
+extern "C" void HandleUnixSigSegv(int sig, siginfo_t* siginfo,
+                                  [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGSEGV + 128);
+}
+extern "C" void HandleUnixSigTstp(int sig, siginfo_t* siginfo,
+                                  [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGTSTP + 128);
+}
+extern "C" void HandleUnixSigSys(int sig, siginfo_t* siginfo,
+                                 [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGSYS + 128);
+}
+extern "C" void HandleUnixSigTerm(int sig, siginfo_t* siginfo,
+                                  [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGTERM + 128);
+}
+extern "C" void HandleUnixSigXcpu(int sig, siginfo_t* siginfo,
+                                  [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGXCPU + 128);
+}
+extern "C" void HandleUnixSigXfsz(int sig, siginfo_t* siginfo,
+                                  [[maybe_unused]] void* context) {
+  atexit_data.sig = sig;
+  atexit_data.siginfo = *siginfo;
+  if (atexit_data.backtrace_data != nullptr &&
+      atexit_data.backtrace_data_size != 0) {
+    atexit_data.backtrace_depth = boost::stacktrace::safe_dump_to(
+        atexit_data.backtrace_data, atexit_data.backtrace_data_size);
+  }
+  std::exit(SIGXFSZ + 128);
 }
 
 void Client::RegisterUnixCrashHandlers() {
+  if (atexit_data.backtrace_data == nullptr) {
+    atexit_data.backtrace_data_size =
+        sizeof(boost::stacktrace::frame::native_frame_ptr_t) * 1024;
+    atexit_data.backtrace_data = std::malloc(atexit_data.backtrace_data_size);
+  }
+  if (std::atexit(ExitHandler) != 0) {
+    throw std::runtime_error(
+        "Registration of atexit function for signal processing");
+  }
   struct sigaction action {};
   action.sa_flags = SA_SIGINFO;
 
@@ -422,9 +666,9 @@ Client::Client(const std::string name) {
     if (!client_->Share(name.c_str())) {
       throw std::runtime_error("client_->Share("s + name + ") failed."s);
     }
-    // Intentionally increase ref counter so that the logger isn't created
-    // and destroyed constantly and to enable log support for crashes
-    client_->Add_Ref();
+    //    // Intentionally increase ref counter so that the logger isn't created
+    //    // and destroyed constantly and to enable log support for crashes
+    //    client_->Add_Ref();
   }
 }
 

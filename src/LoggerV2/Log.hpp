@@ -27,6 +27,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include <boost/predef.h>
 #include <boost/preprocessor/facilities/overload.hpp>
@@ -34,10 +35,12 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include "P7_Trace.h"
+#include "absl/strings/str_split.h"
+
 #include "LoggerV2/CustomSourceLocation.hpp"
 #include "LoggerV2/source_location.h"
 #include "LoggerV2/str_const.hpp"
-#include "P7_Trace.h"
 
 #if __has_include(<glm/gtx/io.hpp>)
 #define GLM_ENABLE_EXPERIMENTAL
@@ -99,6 +102,8 @@ inline constexpr Level convert(const eP7Trace_Level level) {
   }
   return Level::TRACE;
 }
+
+inline constexpr std::size_t kLineWrapLength = 120;
 
 struct ModuleHandle {
   std::string name;
@@ -184,11 +189,22 @@ class Log {
   void RawTrace(const Level level, const std::uint16_t id,
                 const ModuleHandle& handle, const CustomSourceLocation loc,
                 const std::string& format, const Args... all) const {
-    if (!trace_->Trace_Managed(
-            id, convert(level), handle.module, loc.line(), loc.file_name(),
-            loc.function_name(),
-            fmt::format(format, std::forward<const Args>(all)...).c_str())) {
-      std::cerr << "P7 Trace_Managed returned false!" << std::endl;
+    const std::string message =
+        fmt::format(format, std::forward<const Args>(all)...);
+    std::vector<std::string> parts =
+        absl::StrSplit(message, '\n', absl::SkipEmpty());
+    for (const auto& part : parts) {
+      std::vector<std::string> subparts = absl::StrSplit(
+          part, absl::ByLength(kLineWrapLength), absl::SkipEmpty());
+      for (const auto& subpart : subparts) {
+        if (!trace_->Trace_Managed(id, convert(level), handle.module,
+                                   loc.line(), loc.file_name(),
+                                   loc.function_name(), subpart.c_str())) {
+          //          std::cerr << "P7 Trace_Managed returned false!" <<
+          //          std::endl; std::cerr << "Message was:  " << subpart <<
+          //          std::endl;
+        }
+      }
     }
   }
 
@@ -198,7 +214,7 @@ class Log {
    * Otherwise, use the old preprocessor metaprogramming.
    */
 //#if (BOOST_COMP_GNUC >= BOOST_VERSION_NUMBER(9, 0, 0)) ||
-//defined(__IN_ECLIPSE_PARSER__)
+// defined(__IN_ECLIPSE_PARSER__)
 #if defined(__IN_ECLIPSE_PARSER__)
   template <typename... Args,
             str_const file_name = str_const(sl::current().file_name()),
